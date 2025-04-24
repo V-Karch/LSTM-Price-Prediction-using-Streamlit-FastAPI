@@ -14,10 +14,10 @@ class StockRequest(BaseModel):
 
 
 STOCK_FILE_PATHS = {
-    "TSLA": "../data/TSLA_data.csv",
-    "AAPL": "../data/AAPL_data.csv",
-    "AMZN": "../data/AMZN_data.csv",
-    "MSFT": "../data/MSFT_data.csv",
+    "TSLA": "data/TSLA_data.csv",
+    "AAPL": "data/AAPL_data.csv",
+    "AMZN": "data/AMZN_data.csv",
+    "MSFT": "data/MSFT_data.csv",
 }
 
 
@@ -68,7 +68,7 @@ async def predict(stock_request: StockRequest):
 
     test_data = scaled_data[train_len - seq_len :, :]
     x_test = []
-    y_test = dataset[train_data:, :]
+    y_test = dataset[train_len:, :]
 
     for i in range(seq_len, len(test_data)):
         x_test.append(test_data[i - seq_len : i, 0])
@@ -80,5 +80,6 @@ async def predict(stock_request: StockRequest):
     predictions = scaler.inverse_transform(predictions)
 
     predict_prices = [price[0] for price in predictions.tolist()]
+    print({"prediction": predict_prices})
 
     return {"prediction": predict_prices}
