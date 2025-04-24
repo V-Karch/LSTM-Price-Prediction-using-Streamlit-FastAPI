@@ -52,14 +52,17 @@ def main():
     st.plotly_chart(fig)
 
     if st.button("Predict"):
-        payload = {"stock_name": stock_name}
+        payload = {
+            "stock_name": stock_name,
+            "start_date": start_date.strftime("%Y-%m-%d"),
+            "end_date": end_date.strftime("%Y-%m-%d")
+        }
         try:
             response = requests.post(API_URL, json=payload)
             response.raise_for_status()
 
             predictions = response.json()["prediction"]
 
-            # Ensure we only take as many dates as predictions
             pred_dates = df["Date"].iloc[-len(predictions):]
 
             fig = go.Figure()
@@ -74,7 +77,6 @@ def main():
 
         except requests.exceptions.RequestException as e:
             st.error(f"Error occurred while making the prediction request:\n\n{e}")
-
 
 if __name__ == "__main__":
     main()

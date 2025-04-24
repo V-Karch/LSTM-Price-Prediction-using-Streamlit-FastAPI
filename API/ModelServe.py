@@ -11,6 +11,8 @@ app = FastAPI()
 
 class StockRequest(BaseModel):
     stock_name: str
+    start_date: str
+    end_date: str
 
 
 STOCK_FILE_PATHS = {
@@ -26,12 +28,17 @@ async def predict(stock_request: StockRequest):
     stock_name = stock_request.stock_name
     try:
         file_path = STOCK_FILE_PATHS[stock_name]
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, parse_dates=["Date"])
     except KeyError:
         raise HTTPException(status_code=422, detail="Invalid stock name")
 
-    data = df.filter(["Close"])
+    df = df[(df["Date"] >= pd.to_datetime(stock_request.start_date)) & 
+            (df["Date"] <= pd.to_datetime(stock_request.end_date))]
 
+    if len(df) < 60:
+        raise HTTPException(status_code=400, detail="Not enough data for prediction.")
+
+    data = df.filter(["Close"])
     dataset = data.values
 
     train_len = int(np.ceil(len(dataset) * 0.8))
@@ -61,10 +68,7 @@ async def predict(stock_request: StockRequest):
     model.compile(
         optimizer="adam", loss="mean_squared_error", metrics=["mean_squared_error"]
     )
-    model.fit(x_train, y_train, batch_size=32, epochs=5)
-
-    if train_len == 0:
-        train_len = len(scaled_data) - len(train_data)
+    model.fit(x_train, y_train, batch_size=32, epochs=5, verbose=0)
 
     test_data = scaled_data[train_len - seq_len :, :]
     x_test = []
@@ -80,6 +84,4 @@ async def predict(stock_request: StockRequest):
     predictions = scaler.inverse_transform(predictions)
 
     predict_prices = [price[0] for price in predictions.tolist()]
-    print({"prediction": predict_prices})
-
     return {"prediction": predict_prices}
