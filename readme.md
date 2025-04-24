@@ -4,7 +4,7 @@ This project is an implementation of a machine learning model using LSTM to pred
 # Usage
 To run the application, first start the FastAPI server:
 
-```uvicorn app.main:app --reload```
+```uvicorn API.ModelServe:app --reload```
 
 Then, in a separate terminal, start the Streamlit app:
 
